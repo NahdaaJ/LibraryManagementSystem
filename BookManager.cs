@@ -21,7 +21,7 @@ namespace LibraryManagementSystem
             var publicationDate = book.PublicationDate;
 
             string addString = @$"INSERT OR IGNORE INTO {_tableName} (Title, Author, Description, Genre, Publication_Date, Available) 
-                                    VALUES ('@title','@author','@description', '@genre', '@publicationDate', 'Yes');";
+                                    VALUES (@title,@author,@description, @genre, @publicationDate, 'Yes');";
 
             using (var connection = GetConnection())
             {
@@ -76,7 +76,7 @@ namespace LibraryManagementSystem
         {
             var connection = GetConnection();
             connection.Open();
-            string insertString = $"SELECT * FROM {_tableName} WHERE Title LIKE @searchTerm OR Author LIKE @searchTerm OR Genre LIKE @searchTerm OR Available LIKE @searchTerm;";
+            string insertString = $"SELECT * FROM {_tableName} WHERE Title LIKE @searchTerm OR Author LIKE @searchTerm OR Genre LIKE @searchTerm OR Available LIKE @searchTerm ORDER BY Title ASC;";
 
             var command = new SQLiteCommand(insertString, connection);
             command.Parameters.AddWithValue("@searchTerm", searchTerm);
@@ -84,6 +84,17 @@ namespace LibraryManagementSystem
             SQLiteDataReader rdr = command.ExecuteReader();
             return (rdr, connection);
             
+        }
+        internal (SQLiteDataReader, SQLiteConnection) ViewAllBooks()
+        {
+            var connection = GetConnection();
+            connection.Open();
+            string insertString = $"SELECT * FROM {_tableName} ORDER BY Title ASC;";
+
+            var command = new SQLiteCommand(insertString, connection);
+
+            SQLiteDataReader rdr = command.ExecuteReader();
+            return (rdr, connection);
         }
         internal (SQLiteDataReader, SQLiteConnection) GetBookInfo(string id)
         {

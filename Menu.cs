@@ -170,7 +170,8 @@ namespace LibraryManagementSystem
 1 - Loan a Book
 2 - Return a Book
 3 - Search Books
-4 - Logout");
+4 - View All Books
+5 - Logout");
                 var userInput = Console.ReadLine().Trim();
 
                 switch (userInput)
@@ -287,11 +288,11 @@ namespace LibraryManagementSystem
                             Console.Clear();
                             Console.WriteLine($"Results for '{userSearchTerm}' :\n");
                             var (rdr3,connection3) = bookManager.SearchBook(userSearchTerm);
-                            Console.WriteLine("ID        Title                                             Author              Genre            Available?");
-                            Console.WriteLine("-----    ----------------------------------------------    ---------------     ---------        ------------");
+                            Console.WriteLine("ID        Title                                             Author                   Genre                 Available?");
+                            Console.WriteLine("-----    ----------------------------------------------    --------------------     --------------        ------------");
                             while (rdr3.Read())
                             {
-                                Console.WriteLine($"{rdr3.GetInt32(0),-10}{rdr3.GetString(1),-50}{rdr3.GetString(2),-20}{rdr3.GetString(4),-20}{rdr3.GetString(6)}"); // display id, title, author, genre, users can select to read in depth or exit 01246
+                                Console.WriteLine($"{rdr3.GetInt32(0),-10}{rdr3.GetString(1),-50}{rdr3.GetString(2),-25}{rdr3.GetString(4),-25}{rdr3.GetString(6)}"); // display id, title, author, genre, users can select to read in depth or exit 01246
                             }
                             connection3.Close();
                             connection3.Dispose();
@@ -329,13 +330,64 @@ Currently Available: {rdr4.GetString(6)}");
                                 Console.ReadLine();
                                 continue;
                             }
-
-
                             break;            
                         }   
                         break;
 
                     case "4":
+                        validID = false;
+
+                        while (!validID)
+                        {
+                            Console.Clear();
+                            var (rdr5, connection5) = bookManager.ViewAllBooks();
+                            Console.WriteLine("ID        Title                                             Author                   Genre                 Available?");
+                            Console.WriteLine("-----    ----------------------------------------------    --------------------     --------------        ------------");
+                            while (rdr5.Read())
+                            {
+                                Console.WriteLine($"{rdr5.GetInt32(0),-10}{rdr5.GetString(1),-50}{rdr5.GetString(2),-25}{rdr5.GetString(4),-25}{rdr5.GetString(6)}"); // display id, title, author, genre, users can select to read in depth or exit 01246
+                            }
+                            connection5.Close();
+                            connection5.Dispose();
+
+                            Console.WriteLine("----------------------------------------------------------------------------------------------------------------------");
+                            Console.WriteLine("If you would like to see details about a book, please enter the ID.\nIf you would like to return to the main menu, please enter (M).");
+                            var userInput4 = Console.ReadLine().Trim().ToLower();
+                            if (userInput4 == "m")
+                            {
+                                UserMenu(formatFirstName, formatLastName, pin);
+                            }
+
+                            var (rdr6, connection6) = bookManager.GetBookInfo(userInput4);
+                            if (rdr6.HasRows)
+                            {
+                                rdr6.Read();
+                                Console.Clear();
+                                Console.WriteLine("------------------------------------------------------------------------------------------------");
+                                Console.WriteLine(@$"Title: {rdr6.GetString(1),-40}Published: {rdr6.GetString(5)}
+Author: {rdr6.GetString(2),-40}Genre: {rdr6.GetString(4)}
+
+Description:
+{rdr6.GetString(3)}
+
+Currently Available: {rdr6.GetString(6)}");
+                                Console.WriteLine("------------------------------------------------------------------------------------------------");
+                                Console.WriteLine("Please press enter to return to the Main Menu.");
+                                Console.ReadLine();
+                                connection6.Close();
+                                connection6.Dispose();
+                            }
+                            else
+                            {
+                                Console.WriteLine("Invalid input. Please press enter and try again.");
+                                Console.ReadLine();
+                                continue;
+                            }
+                            break;
+                        }
+                        break;
+
+                    case "5":
                         StartScreen();
                         break;
 
@@ -348,6 +400,10 @@ Currently Available: {rdr4.GetString(6)}");
         }
         public void StaffMenu()
         {
+            var bookManager = new BookManager();
+            var userManager = new UserManager();
+            var loanManager = new LoanManager();
+
             var validInput = false;
             // add books, delete books, search books, add users, delete users, search users, search loans
             while (!validInput)
@@ -366,8 +422,76 @@ Book Inventory Options                          User Options                    
                 switch (userInput)
                 {
                     case "1":
-                        Console.WriteLine("Book added to inventory!");
+                        var inputCorrect = false;
+
+                        while (!inputCorrect)
+                        {
+                            Console.Clear();
+                            Console.Write("Please enter the title of the book: ");
+                            var title = Console.ReadLine().Trim().Replace("'","\'").Replace('"','\"').Replace("@","@@");
+
+                            Console.Clear();
+                            Console.Write("Please enter the author of the book: ");
+                            var author = Console.ReadLine().Trim().Replace("'", "\'").Replace('"', '\"').Replace("@", "@@");
+
+                            Console.Clear();
+                            Console.WriteLine("Please enter a description of the book: ");
+                            var description = Console.ReadLine().Trim().Replace("'", "\'").Replace('"', '\"').Replace("@", "@@");
+
+                            Console.Clear();
+                            Console.WriteLine(@"Fiction              Mystery             Thriller            Romance
+Science Fiction      Fantasy             Historical Fiction  Biography
+Non-Fiction          Self-Help           Horror              Adventure
+Young Adult          Poetry              Drama               Crime
+Humor                Political           Philosophy          Reference
+");
+
+
+                            Console.WriteLine("----------------------------------------------------------------------");
+                            Console.Write("Please enter the genre of the book, use one of the keywords listed above: ");
+                            var genre = Console.ReadLine().Trim().Replace("'", "\'").Replace('"', '\"').Replace("@", "@@");
+
+                            Console.Clear();
+                            Console.Write("Please enter the publication date of the book (YYYY-MM-DD format) : ");
+                            var published = Console.ReadLine().Trim().Replace("'", "\'").Replace('"', '\"').Replace("@", "@@");
+
+                            var newBook = new Book();
+                            newBook.Title = title;
+                            newBook.Author = author;
+                            newBook.Description = description;
+                            newBook.Genre = genre;
+                            newBook.PublicationDate = published;
+
+                            Console.Clear();
+
+                            Console.WriteLine(@$"Title: {title,-40}Published: {published}
+Author: {author,-40}Genre: {genre}
+
+Description:
+{description}");
+                            Console.WriteLine("-------------------------------------------------------------------------------------");
+                            Console.WriteLine("Is this correct? (Y/N)");
+                            var correctBook = Console.ReadLine().Trim().ToLower();
+
+                            if (correctBook == "y")
+                            {
+                                Console.Clear();
+                                bookManager.AddBook(newBook);
+                                Console.WriteLine("New book added! Please press enter to return to the Main Menu.");
+                                Console.ReadLine();
+                                break;
+                            }
+                            else if (correctBook == "n")
+                            {
+                                continue;
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }                 
                         break;
+
                     case "2":
                         Console.WriteLine("Book removed from inventory!");
                         break;
@@ -386,7 +510,9 @@ Book Inventory Options                          User Options                    
                     case "7":
                         Console.WriteLine("So many readers!!");
                         break;
-                    case "8":
+                    case "8":;
+                        break;
+                    case "9":
                         StartScreen();
                         break;
                     default:
