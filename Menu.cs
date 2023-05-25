@@ -6,6 +6,7 @@
         {
             var check = new DatabaseManager();
             check.InitialiseDatabase();
+
             var login = new Login();
             var inputCorrect = false;
 
@@ -132,11 +133,13 @@
                             }
                         }
                         break;
+
                     case "3":
                         Console.Clear();
                         Console.WriteLine("Thank you for visiting Enfield Library!\nExiting...");
                         Environment.Exit(0);
                         break;
+
                     default:
                         Console.WriteLine("Incorrect input. Please press enter and try again.");
                         Console.ReadLine();
@@ -155,8 +158,6 @@
             var temp2 = lastName[0].ToString();
             var formatLastName = temp2.ToUpper() + lastName.Substring(1);
 
-            
-
             var validInput = false;
 
             while (!validInput)
@@ -174,6 +175,11 @@
                 var (read, connection) = userManager.GetID(pin);
                 read.Read();
                 var userID = read.GetInt32(0);
+                
+                read.Close();
+                read.Dispose();
+                connection.Close();
+                connection.Dispose();                
 
                 switch (userInput)
                 {
@@ -192,10 +198,11 @@
 
                         while (!validID)
                         {
-                            Console.Clear();
-                            var (reader, conn) = bookManager.SearchBook("Yes");
+                            Console.Clear();                            
                             Console.WriteLine("ID        Book Title                                                  Author");
                             Console.WriteLine("----     ------------------------------------------------------      ---------------------");
+
+                            var (reader, conn) = bookManager.SearchBook("Yes");
                             while (reader.Read())
                             {
                                 Console.WriteLine($"{reader.GetInt32(0),-10}{reader.GetString(1),-60}{reader.GetString(2)}");
@@ -205,12 +212,16 @@
                             reader.Dispose();
                             conn.Close();
                             conn.Dispose();
+
                             Console.WriteLine("------------------------------------------------------------------------------------------");
                             Console.WriteLine("Please input the ID of one of the above books, or press (C) to cancel.");
                             userInput = Console.ReadLine().Trim().ToLower();
 
                             if (userInput == "c")
                             {
+                                Console.Clear();
+                                Console.WriteLine("Action cancelled. Please press enter to return to Main Menu");
+                                Console.ReadLine();
                                 UserMenu(firstName, lastName, pin);
                             }
 
@@ -222,13 +233,14 @@
                             }
                             break;
                         }
-                        Console.Clear();
+
                         var (rdr1, connection1) = bookManager.GetBookInfo(userInput);
                         while (rdr1.Read())
                         {
                             loanTitle = rdr1.GetString(1);
                             loanAuthor = rdr1.GetString(2);
-                        }                        
+                        }              
+                        
                         rdr1.Close();
                         rdr1.Dispose();
                         connection1.Close();
@@ -241,6 +253,7 @@
                         loan.DateBorrowed = DateTime.Now;
 
                         loanManager.LoanBook(loan);
+
                         Console.Clear();
                         Console.WriteLine("Enjoy your book! Please press enter to return to Main Menu.");
                         Console.ReadLine();
@@ -271,24 +284,32 @@
                                 }
                                 Console.WriteLine($"{rdr2.GetInt32(0),-10}{titleString,-40}{authorString,-24}{rdr2.GetString(4).Substring(0, 10),-20}{rdr2.GetString(5).Substring(0, 10)}");
                             }
+
                             rdr2.Close();
                             rdr2.Dispose();
                             connection2.Close();
                             connection2.Dispose();
+
                             Console.WriteLine("---------------------------------------------------------------------------------------------------------");
                             Console.WriteLine("Please enter the ID of the book you would like to return, or type (C) to cancel.");
                             var userInput2 = Console.ReadLine().Trim();
 
                             if (userInput2 == "c" || userInput2 == "C")
                             {
+                                Console.Clear();
+                                Console.WriteLine("Action cancelled. Please press enter to return to Main Menu");
+                                Console.ReadLine();
                                 UserMenu(formatFirstName, formatLastName, pin);
                             }
-                            if (loanManager.GetLoan(userInput2) == 0) {
+                            if (loanManager.GetLoan(userInput2) == 0) 
+                            {
                                 Console.WriteLine("Please enter a valid ID.");
                                 Console.ReadLine();
                                 continue;
                             }
+
                             loanManager.ReturnBook(userInput2);
+
                             Console.Clear();
                             Console.WriteLine("We hope you enjoyed your book! Please press enter to return to Main Menu.");
                             Console.ReadLine();
@@ -306,9 +327,11 @@
                         {
                             Console.Clear();
                             Console.WriteLine($"Results for '{userSearchTerm}' :\n");
-                            var (rdr3,connection3) = bookManager.SearchBook(userSearchTerm);
+
                             Console.WriteLine("ID        Title                                             Author                   Genre                 Available?");
                             Console.WriteLine("-----    ----------------------------------------------    --------------------     --------------        ------------");
+
+                            var (rdr3,connection3) = bookManager.SearchBook(userSearchTerm);
                             while (rdr3.Read())
                             {
                                 var titleString = rdr3.GetString(1);
@@ -324,6 +347,7 @@
                                 }
                                 Console.WriteLine($"{rdr3.GetInt32(0),-10}{titleString,-50}{authorString,-25}{rdr3.GetString(4),-25}{rdr3.GetString(6)}"); // display id, title, author, genre, users can select to read in depth or exit 01246
                             }
+
                             rdr3.Close();
                             rdr3.Dispose();
                             connection3.Close();
@@ -332,6 +356,7 @@
                             Console.WriteLine("------------------------------------------------------------------------------------------------------------");
                             Console.WriteLine("If you would like to see details about a book, please enter the ID.\nIf you would like to return to the main menu, please enter (M).");
                             var userInput3 = Console.ReadLine().Trim().ToLower();
+
                             if (userInput3 == "m")
                             {
                                 UserMenu(formatFirstName, formatLastName, pin);
@@ -375,9 +400,10 @@ Currently Available: {rdr4.GetString(6)}");
                         while (!validID)
                         {
                             Console.Clear();
-                            var (rdr5, connection5) = bookManager.ViewAllBooks();
                             Console.WriteLine("ID        Title                                             Author                   Genre                 Available?");
                             Console.WriteLine("-----    ----------------------------------------------    --------------------     --------------        ------------");
+
+                            var (rdr5, connection5) = bookManager.ViewAllBooks();
                             while (rdr5.Read())
                             {
                                 var titleString = rdr5.GetString(1);
@@ -393,6 +419,7 @@ Currently Available: {rdr4.GetString(6)}");
                                 }
                                 Console.WriteLine($"{rdr5.GetInt32(0),-10}{titleString,-50}{authorString,-25}{rdr5.GetString(4),-25}{rdr5.GetString(6)}"); // display id, title, author, genre, users can select to read in depth or exit 01246
                             }
+
                             rdr5.Close();
                             rdr5.Dispose();
                             connection5.Close();
@@ -401,6 +428,7 @@ Currently Available: {rdr4.GetString(6)}");
                             Console.WriteLine("----------------------------------------------------------------------------------------------------------------------");
                             Console.WriteLine("If you would like to see details about a book, please enter the ID.\nIf you would like to return to the main menu, please enter (M).");
                             var userInput4 = Console.ReadLine().Trim().ToLower();
+
                             if (userInput4 == "m")
                             {
                                 UserMenu(formatFirstName, formatLastName, pin);
@@ -439,6 +467,9 @@ Currently Available: {rdr6.GetString(6)}");
                         break;
 
                     case "5":
+                        Console.Clear();
+                        Console.WriteLine("Goodbye! Press enter to return to the start screen.");
+                        Console.ReadLine();
                         StartScreen();
                         break;
 
@@ -456,6 +487,7 @@ Currently Available: {rdr6.GetString(6)}");
             var loanManager = new LoanManager();
 
             var validInput = false;
+
             while (!validInput)
             {
                 Console.Clear();
@@ -514,7 +546,6 @@ Humor                Political           Philosophy          Reference
                             newBook.PublicationDate = published;
 
                             Console.Clear();
-
                             Console.WriteLine(@$"Title: {title,-40}Published: {published}
 Author: {author,-39}Genre: {genre}
 
@@ -538,6 +569,9 @@ Description:
                             }
                             else
                             {
+                                Console.Clear();
+                                Console.WriteLine("Action cancelled. Please press enter to return to Main Menu");
+                                Console.ReadLine();
                                 break;
                             }
                         }                 
@@ -554,9 +588,11 @@ Description:
 
                             Console.Clear();
                             Console.WriteLine($"Results for '{removeBookSearch}' :\n");
-                            var (rdr, connection) = bookManager.SearchBook(removeBookSearch);
+
                             Console.WriteLine("ID        Title                                             Author                   Genre                 Available?");
                             Console.WriteLine("-----    ----------------------------------------------    --------------------     --------------        ------------");
+
+                            var (rdr, connection) = bookManager.SearchBook(removeBookSearch);
                             while (rdr.Read())
                             {
                                 var titleString = rdr.GetString(1);
@@ -572,6 +608,7 @@ Description:
                                 }
                                 Console.WriteLine($"{rdr.GetInt32(0),-10}{titleString,-50}{authorString,-25}{rdr.GetString(4),-25}{rdr.GetString(6)}");
                             }
+
                             rdr.Close();
                             rdr.Dispose();
                             connection.Close();
@@ -580,10 +617,12 @@ Description:
                             Console.WriteLine("----------------------------------------------------------------------------------------------------------------------");
                             Console.WriteLine("Please enter the ID of the book you would like to remove.\nIf you would like to return to the main menu, please enter (M).");
                             var bookID = Console.ReadLine().Trim().ToLower();
+
                             if (bookID == "m")
                             {
                                 StaffMenu();
                             }
+
                             var (rdr2, connection2) = bookManager.GetBookInfo(bookID);
                             if (rdr2.HasRows)
                             {
@@ -606,21 +645,24 @@ Currently Available: {rdr2.GetString(6)}");
                                 connection2.Close();
                                 connection2.Dispose();
 
-                                switch (correctBook)
+                                if (correctBook == "y")
                                 {
-                                    case "y":
-                                        bookManager.RemoveBook(bookID);
-                                        Console.Clear();
-                                        Console.WriteLine("Book removed from inventory! Press enter to return to the Main Menu.");
-                                        Console.ReadLine();
-                                        break;
-                                    case "n":
-                                        continue;
-                                        break;
-                                    case "c":
-                                        StaffMenu();
-                                        break;                                       
+                                    bookManager.RemoveBook(bookID);
+                                    Console.Clear();
+                                    Console.WriteLine("Book removed from inventory! Press enter to return to the Main Menu.");
+                                    Console.ReadLine();
                                 }
+                                else if (correctBook == "n")
+                                {
+                                    continue;
+                                }
+                                else
+                                {
+                                    Console.Clear();
+                                    Console.WriteLine("Action cancelled. Please press enter to return to Main Menu");
+                                    Console.ReadLine();
+                                    StaffMenu();
+                                }          
                             }
                             else
                             {
@@ -642,9 +684,11 @@ Currently Available: {rdr2.GetString(6)}");
                         {
                             Console.Clear();
                             Console.WriteLine($"Results for '{userSearchTerm}' :\n");
-                            var (rdr3, connection3) = bookManager.SearchBook(userSearchTerm);
+
                             Console.WriteLine("ID        Title                                             Author                   Genre                 Available?");
                             Console.WriteLine("-----    ----------------------------------------------    --------------------     --------------        ------------");
+
+                            var (rdr3, connection3) = bookManager.SearchBook(userSearchTerm);
                             while (rdr3.Read())
                             {
                                 var titleString = rdr3.GetString(1);
@@ -669,6 +713,7 @@ Currently Available: {rdr2.GetString(6)}");
                             Console.WriteLine("------------------------------------------------------------------------------------------------------------");
                             Console.WriteLine("If you would like to see details about a book, please enter the ID.\nIf you would like to return to the main menu, please enter (M).");
                             var userInput3 = Console.ReadLine().Trim().ToLower();
+
                             if (userInput3 == "m")
                             {
                                 StaffMenu();
@@ -687,13 +732,16 @@ Description:
 {rdr4.GetString(3)}
 
 Currently Available: {rdr4.GetString(6)}");
+
                                 Console.WriteLine("------------------------------------------------------------------------------------------------");
                                 Console.WriteLine("Please press enter to return to the Main Menu.");
                                 Console.ReadLine();
+
                                 rdr4.Close();
                                 rdr4.Dispose();
                                 connection4.Close();
                                 connection4.Dispose();
+
                                 break;
                             }
                             else
@@ -710,9 +758,10 @@ Currently Available: {rdr4.GetString(6)}");
                         while (!validID)
                         {
                             Console.Clear();
-                            var (rdr5, connection5) = bookManager.ViewAllBooks();
                             Console.WriteLine("ID        Title                                             Author                   Genre                 Available?");
                             Console.WriteLine("-----    ----------------------------------------------    --------------------     --------------        ------------");
+
+                            var (rdr5, connection5) = bookManager.ViewAllBooks();
                             while (rdr5.Read())
                             {
                                 var titleString = rdr5.GetString(1);
@@ -728,6 +777,7 @@ Currently Available: {rdr4.GetString(6)}");
                                 }
                                 Console.WriteLine($"{rdr5.GetInt32(0),-10}{titleString,-50}{authorString,-25}{rdr5.GetString(4),-25}{rdr5.GetString(6)}");
                             }
+
                             rdr5.Close();
                             rdr5.Dispose();
                             connection5.Close();
@@ -736,6 +786,7 @@ Currently Available: {rdr4.GetString(6)}");
                             Console.WriteLine("----------------------------------------------------------------------------------------------------------------------");
                             Console.WriteLine("If you would like to see details about a book, please enter the ID.\nIf you would like to return to the main menu, please enter (M).");
                             var userInput4 = Console.ReadLine().Trim().ToLower();
+
                             if (userInput4 == "m")
                             {
                                 StaffMenu();
@@ -745,6 +796,7 @@ Currently Available: {rdr4.GetString(6)}");
                             if (rdr6.HasRows)
                             {
                                 rdr6.Read();
+
                                 Console.Clear();
                                 Console.WriteLine("------------------------------------------------------------------------------------------------");
                                 Console.WriteLine(@$"Title: {rdr6.GetString(1),-40}Published: {rdr6.GetString(5).Substring(0, 10)}
@@ -754,9 +806,11 @@ Description:
 {rdr6.GetString(3)}
 
 Currently Available: {rdr6.GetString(6)}");
+
                                 Console.WriteLine("------------------------------------------------------------------------------------------------");
                                 Console.WriteLine("Please press enter to return to the Main Menu.");
                                 Console.ReadLine();
+
                                 rdr6.Close();
                                 rdr6.Dispose();
                                 connection6.Close();
@@ -790,45 +844,50 @@ Currently Available: {rdr6.GetString(6)}");
                             Console.WriteLine($"Is this correct? (Y/N) Or would you like to cancel? (C)\n\nFirst Name: {firstName,-14}\tLast Name: {lastName,-15}\tEmail: {email}");
                             var detailsCorrect = Console.ReadLine().Trim().ToLower();
 
-                            switch (detailsCorrect)
+                            if (detailsCorrect == "y")
                             {
-                                case "y":
-                                    var newUser = new User();
-                                    newUser.FirstName = firstName;
-                                    newUser.LastName = lastName;
-                                    newUser.Email = email;
+                                var newUser = new User();
+                                newUser.FirstName = firstName;
+                                newUser.LastName = lastName;
+                                newUser.Email = email;
 
-                                    userManager.AddUser(newUser);
-                                    var (rdr5, connection5) = userManager.GetPin(firstName, lastName, email);
-                                    rdr5.Read();
-                                    var pin = rdr5.GetInt32(0);
+                                userManager.AddUser(newUser);
+                                var (rdr5, connection5) = userManager.GetPin(firstName, lastName, email);
+                                rdr5.Read();
+                                var pin = rdr5.GetInt32(0);
 
-                                    rdr5.Close();
-                                    rdr5.Dispose();
-                                    connection5.Close();
-                                    connection5.Dispose();
+                                rdr5.Close();
+                                rdr5.Dispose();
+                                connection5.Close();
+                                connection5.Dispose();
 
-                                    Console.Clear();
-                                    Console.WriteLine($@"-------------------------- New User Details --------------------------
+                                Console.Clear();
+                                Console.WriteLine($@"-------------------------- New User Details --------------------------
 First Name: {firstName,-35}Last Name: {lastName}
 Email: {email,-40}Unique Pin: {pin}
 ");
-                                    Console.WriteLine("----------------------------------------------------------------------");
-                                    Console.WriteLine("Please press enter to return to the Main Menu.");
-                                    Console.ReadLine();
-                                    StaffMenu();
-                                    break;
-                                case "n":
-                                    continue;
-                                    break;
-                                case "c":
-                                    StaffMenu();
-                                    break;
-                                default:
-                                    Console.WriteLine("Invalid input. Please press enter and try again.");
-                                    Console.ReadLine();
-                                    break;
+                                Console.WriteLine("----------------------------------------------------------------------");
+                                Console.WriteLine("Please press enter to return to the Main Menu.");
+                                Console.ReadLine();
+                                StaffMenu();
                             }
+                            else if (detailsCorrect == "n")
+                            {
+                                continue;
+                            }
+                            else if (detailsCorrect == "c")
+                            {
+                                Console.Clear();
+                                Console.WriteLine("Action cancelled. Please press enter to return to Main Menu");
+                                Console.ReadLine();
+                                StaffMenu();
+                            }
+                            else
+                            {
+                                Console.WriteLine("Invalid input. Please press enter and try again.");
+                                Console.ReadLine();
+                                continue;
+                            }                              
                         }
                         break;
                     case "6":
@@ -842,9 +901,11 @@ Email: {email,-40}Unique Pin: {pin}
 
                             Console.Clear();
                             Console.WriteLine($"Results for '{removeUserSearch}' :\n");
-                            var (rdr6, connection6) = userManager.SearchUser(removeUserSearch);
+
                             Console.WriteLine("ID        First Name          Last Name           Email                                   Pin");
                             Console.WriteLine("-----    ---------------     ---------------     -----------------------------------     ----------");
+
+                            var (rdr6, connection6) = userManager.SearchUser(removeUserSearch);
                             while (rdr6.Read())
                             {
                                 Console.WriteLine($"{rdr6.GetInt32(0),-10}{rdr6.GetString(1),-20}{rdr6.GetString(2),-20}{rdr6.GetString(3),-40} {rdr6.GetInt32(4)}");
@@ -858,10 +919,12 @@ Email: {email,-40}Unique Pin: {pin}
                             Console.WriteLine("---------------------------------------------------------------------------------------------------");
                             Console.WriteLine("Please enter the ID of the user you would like to remove.\nIf you would like to return to the Main Menu, please enter (M).");
                             var userRemoveID = Console.ReadLine().Trim().ToLower();
+
                             if (userRemoveID == "m")
                             {
                                 StaffMenu();
                             }
+
                             (rdr6, connection6) = userManager.GetUserInfo(userRemoveID);
                             if (rdr6.HasRows)
                             {
@@ -878,21 +941,25 @@ Email: {email,-40}Unique Pin: {pin}
                                 connection6.Close();
                                 connection6.Dispose();
 
-                                switch (correctBook)
+                                if (correctBook == "y")
                                 {
-                                    case "y":
-                                        userManager.RemoveUser(userRemoveID);
-                                        Console.Clear();
-                                        Console.WriteLine("User removed! Press enter to return to the Main Menu.");
-                                        Console.ReadLine();
-                                        break;
-                                    case "n":
-                                        continue;
-                                        break;
-                                    case "c":
-                                        StaffMenu();
-                                        break;
+                                    userManager.RemoveUser(userRemoveID);
+                                    Console.Clear();
+                                    Console.WriteLine("User removed! Press enter to return to the Main Menu.");
+                                    Console.ReadLine();
+                                    break;
                                 }
+                                else if (correctBook == "n")
+                                {
+                                    continue;
+                                }
+                                else
+                                {
+                                    Console.Clear();
+                                    Console.WriteLine("Action cancelled. Please press enter to return to Main Menu");
+                                    Console.ReadLine();
+                                    StaffMenu();
+                                }                                
                             }
                             else
                             {
@@ -912,9 +979,11 @@ Email: {email,-40}Unique Pin: {pin}
 
                         Console.Clear();
                         Console.WriteLine($"Results for '{userSearch}' :\n");
-                        var (rdr7, connection7) = userManager.SearchUser(userSearch);
+
                         Console.WriteLine("ID        First Name          Last Name           Email                                   Pin");
                         Console.WriteLine("-----    ---------------     ---------------     -----------------------------------     ----------");
+
+                        var (rdr7, connection7) = userManager.SearchUser(userSearch);
                         while (rdr7.Read())
                         {
                             Console.WriteLine($"{rdr7.GetInt32(0),-10}{rdr7.GetString(1),-20}{rdr7.GetString(2),-20}{rdr7.GetString(3),-40}{rdr7.GetInt32(4)}");
@@ -929,11 +998,13 @@ Email: {email,-40}Unique Pin: {pin}
                         Console.WriteLine("Please press enter to return to the Main Menu.");
                         Console.ReadLine();
                         break;
+
                     case "8":                        
-                        Console.Clear();
-                        var (rdr8, connection8) = userManager.ViewAllUsers();
+                        Console.Clear();                        
                         Console.WriteLine("ID        First Name          Last Name           Email                                   Pin");
                         Console.WriteLine("-----    ---------------     ---------------     -----------------------------------     ----------");
+
+                        var (rdr8, connection8) = userManager.ViewAllUsers();
                         while (rdr8.Read())
                         {
                             Console.WriteLine($"{rdr8.GetInt32(0),-10}{rdr8.GetString(1),-20}{rdr8.GetString(2),-20}{rdr8.GetString(3),-40}{rdr8.GetInt32(4)}");
@@ -948,11 +1019,13 @@ Email: {email,-40}Unique Pin: {pin}
                         Console.WriteLine("Please press enter to return to the Main Menu.");
                         Console.ReadLine();
                         break;
+
                     case "9":
-                        Console.Clear();
-                        var (rdr9, connection9) = loanManager.ViewAllLoans();
+                        Console.Clear();                        
                         Console.WriteLine("ID        User ID        Book Title                              Author                   Date Loaned    Due Date");
                         Console.WriteLine("-----    ---------      -----------------------------------     ---------------------    ------------   ------------");
+                        
+                        var (rdr9, connection9) = loanManager.ViewAllLoans();
                         while (rdr9.Read())
                         {
                             var titleString = rdr9.GetString(2);
@@ -976,9 +1049,9 @@ Email: {email,-40}Unique Pin: {pin}
 
                         Console.WriteLine("----------------------------------------------------------------------------------------------------------------------");
                         Console.WriteLine("Please press enter to return to the Main Menu.");
-                        Console.ReadLine();
+                        Console.ReadLine();                        
                         break;
-                        break;
+
                     case "10":
                         var pinIsNum = false;
                         validID = false;
@@ -989,16 +1062,22 @@ Email: {email,-40}Unique Pin: {pin}
                             Console.Clear();
                             Console.Write("Please enter the users pin, or enter (C) to cancel: ");
                             var userPinString = Console.ReadLine().Trim().ToLower();
+
                             if (userPinString == "c")
                             {
+                                Console.Clear();
+                                Console.WriteLine("Action cancelled. Please press enter to return to the Main Menu.");
+                                Console.ReadLine();
                                 StaffMenu();
                             }
+
                             if (!int.TryParse(userPinString, out _))
                             {
                                 Console.WriteLine("Pin must be an 8-digit number. Please press enter and try again.");
                                 Console.ReadLine();
                                 continue;
                             }
+
                             var userPin = int.Parse(userPinString);
                             var (rdr11, connection11) = userManager.GetID(userPin);
 
@@ -1024,8 +1103,8 @@ Email: {email,-40}Unique Pin: {pin}
                                 Console.ReadLine();
                                 continue;
                             }
-
                         }
+
                         while (!validID) 
                         { 
                             var (rdr10, connection10) = loanManager.SearchUserLoans(userID);
@@ -1037,6 +1116,7 @@ Email: {email,-40}Unique Pin: {pin}
                                     Console.Clear();
                                     Console.WriteLine("ID        Book Title                              Author                   Date Loaned         Due Date");
                                     Console.WriteLine("-----    -----------------------------------     ---------------------    ------------        -----------");
+
                                     var titleString = rdr10.GetString(2);
                                     var authorString = rdr10.GetString(3);
 
@@ -1059,17 +1139,24 @@ Email: {email,-40}Unique Pin: {pin}
                                 Console.WriteLine("----------------------------------------------------------------------------------------------------------------------");
                                 Console.WriteLine("Please enter the ID of which loan to renew, or enter (C) to cancel.");
                                 var loanID = Console.ReadLine().Trim().ToLower();
+
                                 if (loanID == "c")
                                 {
+                                    Console.Clear();
+                                    Console.WriteLine("Action cancelled. Please press enter to return to the Main Menu.");
+                                    Console.ReadLine();
                                     StaffMenu();
                                 }
+
                                 if (loanManager.CheckLoanExists(loanID) == 0)
                                 {
                                     Console.WriteLine("Please enter a valid ID.");
                                     Console.ReadLine();
                                     continue;
                                 }
+
                                 loanManager.RenewBook(loanID);
+
                                 Console.WriteLine("Loan renewed! Please press enter to return to the Main Menu.");
                                 Console.ReadLine();
                                 break;
@@ -1081,6 +1168,7 @@ Email: {email,-40}Unique Pin: {pin}
                                 rdr10.Dispose();
                                 connection10.Close();
                                 connection10.Dispose();
+
                                 Console.WriteLine("Invalid pin. Please press enter and try again.");
                                 Console.ReadLine();
                                 continue;
@@ -1089,8 +1177,12 @@ Email: {email,-40}Unique Pin: {pin}
                         break;
 
                     case "11":
+                        Console.Clear();
+                        Console.WriteLine("Goodbye! Press enter to return to the start screen.");
+                        Console.ReadLine();
                         StartScreen();
                         break;
+
                     default:
                         Console.WriteLine("Incorrect input, please press enter and try again.");
                         Console.ReadLine();

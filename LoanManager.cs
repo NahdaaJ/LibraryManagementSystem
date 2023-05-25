@@ -70,7 +70,7 @@ namespace LibraryManagementSystem
         }
         internal void RenewBook(string loanID)
         {
-            var dueDate = DateTime.Now.AddDays(1).ToString("yyyy-MM-dd"); // CHANGE THIS bACK TO 14
+            var dueDate = DateTime.Now.AddDays(14).ToString("yyyy-MM-dd");
            
             using (var connection = GetConnection())
             {
@@ -111,7 +111,7 @@ namespace LibraryManagementSystem
             MySqlDataReader rdr = command.ExecuteReader();
             return (rdr, connection);
         }
-        internal int GetLoan(string id) // new close
+        internal int GetLoan(string id)
         {
             var connection = GetConnection();
             connection.Open();

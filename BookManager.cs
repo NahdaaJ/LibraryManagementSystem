@@ -67,9 +67,9 @@ namespace LibraryManagementSystem
         {
             var connection = GetConnection();
             connection.Open();
-            string insertString = $"SELECT * FROM {_tableName} WHERE Title LIKE @searchTerm OR Author LIKE @searchTerm OR Genre LIKE @searchTerm OR Available LIKE @searchTerm ORDER BY Title ASC;";
+            string searchString = $"SELECT * FROM {_tableName} WHERE Title LIKE @searchTerm OR Author LIKE @searchTerm OR Genre LIKE @searchTerm OR Available LIKE @searchTerm ORDER BY Title ASC;";
 
-            var command = new MySqlCommand(insertString, connection);
+            var command = new MySqlCommand(searchString, connection);
             command.Parameters.AddWithValue("@searchTerm", searchTerm);
 
             MySqlDataReader rdr = command.ExecuteReader();
@@ -80,9 +80,9 @@ namespace LibraryManagementSystem
         {
             var connection = GetConnection();
             connection.Open();
-            string insertString = $"SELECT * FROM {_tableName} ORDER BY Title ASC;";
+            string searchString = $"SELECT * FROM {_tableName} ORDER BY Title ASC;";
 
-            var command = new MySqlCommand(insertString, connection);
+            var command = new MySqlCommand(searchString, connection);
 
             MySqlDataReader rdr = command.ExecuteReader();
             return (rdr, connection);
@@ -99,21 +99,6 @@ namespace LibraryManagementSystem
             var rdr = command.ExecuteReader();
             return (rdr, connection);
             
-        }
-        internal (MySqlDataReader, MySqlConnection) GetBookInfo(string title, string author)
-        {
-            var connection = GetConnection();            
-            connection.Open();
-
-            string searchString = $"SELECT * FROM {_tableName} WHERE Title = @title AND Author = @author;";
-            var command = new MySqlCommand(searchString, connection);
-
-            command.Parameters.AddWithValue("@title", title);
-            command.Parameters.AddWithValue("@author", author);
-
-            var rdr = command.ExecuteReader();
-            return (rdr, connection);
-
         }
         internal int CheckBookExists(string id, string available) // new close
         {

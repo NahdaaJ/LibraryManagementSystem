@@ -5,7 +5,6 @@ namespace LibraryManagementSystem
     internal class DatabaseManager
     {
         private static readonly string _databaseName = "LibraryManager";
-        private static readonly string _dataabseExtension = "LibraryManager.db";
         private static readonly string _connectionString = Helper.ConnVal("DBExists");
         private static readonly string _initialisationString = Helper.ConnVal("DBDoesNotExist");
 
@@ -84,8 +83,8 @@ namespace LibraryManagementSystem
             {
                 connection.Open();
 
-                string searchString = $"SELECT COUNT(*) FROM Users WHERE First_Name COLLATE utf8mb4_general_ci = @firstName AND Last_Name COLLATE utf8mb4_general_ci = @lastName AND Pin = @pin;";
-                using (var command = new MySqlCommand(searchString, connection))
+                string validateString = $"SELECT COUNT(*) FROM Users WHERE First_Name COLLATE utf8mb4_general_ci = @firstName AND Last_Name COLLATE utf8mb4_general_ci = @lastName AND Pin = @pin;";
+                using (var command = new MySqlCommand(validateString, connection))
                 {
                     command.Parameters.AddWithValue("@firstName", firstName);
                     command.Parameters.AddWithValue("@lastName", lastName);

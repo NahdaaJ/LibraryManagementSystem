@@ -43,7 +43,7 @@ namespace LibraryManagementSystem
                 connection.Close();
             }
         }
-        internal void EditUser(string firstName, string lastName, string pin)
+        internal void EditUser(string firstName, string lastName, string pin) // Will use this in future update.
         {
             string editString = @$"";
             using (var connection = GetConnection())
@@ -118,9 +118,9 @@ namespace LibraryManagementSystem
         {
             var connection = GetConnection();
             connection.Open();
-            string insertString = $"SELECT * FROM {_tableName} ORDER BY First_Name ASC;";
+            string searchString = $"SELECT * FROM {_tableName} ORDER BY First_Name ASC;";
 
-            var command = new MySqlCommand(insertString, connection);
+            var command = new MySqlCommand(searchString, connection);
 
             MySqlDataReader rdr = command.ExecuteReader();
             return (rdr, connection);
