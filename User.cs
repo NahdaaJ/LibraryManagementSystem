@@ -22,9 +22,9 @@ namespace LibraryManagementSystem
             {
                 var random = new Random();
                 string temp = "";
-                for (int i = 0; i < 8; i++)
+                for (int i = 0; i <= 7; i++)
                 {
-                    temp += random.Next(0, 9).ToString();
+                    temp += random.Next(0, 10).ToString();
                 }
                 pin = int.Parse(temp);
                 if (database.CheckPinDistinct(pin) == 0)

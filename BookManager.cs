@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data.SQLite;
-using System.Globalization;
-using System.Linq;
-using System.Net.NetworkInformation;
-using System.Text;
-using System.Threading.Tasks;
+﻿using MySql.Data.MySqlClient;
 
 namespace LibraryManagementSystem
 {
@@ -20,13 +13,13 @@ namespace LibraryManagementSystem
             var genre = book.Genre;
             var publicationDate = book.PublicationDate;
 
-            string addString = @$"INSERT OR IGNORE INTO {_tableName} (Title, Author, Description, Genre, Publication_Date, Available) 
+            string addString = @$"INSERT IGNORE INTO {_tableName} (Title, Author, Description, Genre, Publication_Date, Available) 
                                     VALUES (@title,@author,@description, @genre, @publicationDate, 'Yes');";
 
             using (var connection = GetConnection())
             {
                 connection.Open();
-                using (var command = new SQLiteCommand(addString, connection))
+                using (var command = new MySqlCommand(addString, connection))
                 {
                     command.Parameters.AddWithValue("@title", title);
                     command.Parameters.AddWithValue("@author", author);
@@ -39,17 +32,15 @@ namespace LibraryManagementSystem
                 connection.Close();
             }
         }
-        internal void RemoveBook(string title, string author)
+        internal void RemoveBook(string id)
         {
-            string deleteString = @$"DELETE FROM {_tableName} WHERE Title COLLATE NOCASE = @title AND Author COLLATE NOCASE = @author;";
+            string deleteString = @$"DELETE FROM {_tableName} WHERE ID = @id;";
             using (var connection = GetConnection())
             {
                 connection.Open();
-                using (var command = new SQLiteCommand(deleteString, connection))
+                using (var command = new MySqlCommand(deleteString, connection))
                 {
-                    command.Parameters.AddWithValue("@title", title);
-                    command.Parameters.AddWithValue("@author", author);
-
+                    command.Parameters.AddWithValue("@id", id);
                     command.ExecuteNonQuery();
                 }
                 connection.Close();
@@ -61,7 +52,7 @@ namespace LibraryManagementSystem
             using (var connection = GetConnection())
             {
                 connection.Open();
-                using (var command = new SQLiteCommand(editString, connection))
+                using (var command = new MySqlCommand(editString, connection))
                 {
                     command.Parameters.AddWithValue("@title", title);
                     command.Parameters.AddWithValue("@author", author);
@@ -72,50 +63,50 @@ namespace LibraryManagementSystem
                 connection.Close();
             }
         }
-        internal (SQLiteDataReader,SQLiteConnection) SearchBook(string searchTerm)
+        internal (MySqlDataReader, MySqlConnection) SearchBook(string searchTerm)
         {
             var connection = GetConnection();
             connection.Open();
             string insertString = $"SELECT * FROM {_tableName} WHERE Title LIKE @searchTerm OR Author LIKE @searchTerm OR Genre LIKE @searchTerm OR Available LIKE @searchTerm ORDER BY Title ASC;";
 
-            var command = new SQLiteCommand(insertString, connection);
+            var command = new MySqlCommand(insertString, connection);
             command.Parameters.AddWithValue("@searchTerm", searchTerm);
 
-            SQLiteDataReader rdr = command.ExecuteReader();
+            MySqlDataReader rdr = command.ExecuteReader();
             return (rdr, connection);
             
         }
-        internal (SQLiteDataReader, SQLiteConnection) ViewAllBooks()
+        internal (MySqlDataReader, MySqlConnection) ViewAllBooks()
         {
             var connection = GetConnection();
             connection.Open();
             string insertString = $"SELECT * FROM {_tableName} ORDER BY Title ASC;";
 
-            var command = new SQLiteCommand(insertString, connection);
+            var command = new MySqlCommand(insertString, connection);
 
-            SQLiteDataReader rdr = command.ExecuteReader();
+            MySqlDataReader rdr = command.ExecuteReader();
             return (rdr, connection);
         }
-        internal (SQLiteDataReader, SQLiteConnection) GetBookInfo(string id)
+        internal (MySqlDataReader, MySqlConnection) GetBookInfo(string id)
         {
             var connection = GetConnection();            
             connection.Open();
 
             string searchString = $@"SELECT * FROM {_tableName} WHERE ID = @id;";
-            var command = new SQLiteCommand(searchString, connection);
+            var command = new MySqlCommand(searchString, connection);
                 
             command.Parameters.AddWithValue("@id", id);
             var rdr = command.ExecuteReader();
             return (rdr, connection);
             
         }
-        internal (SQLiteDataReader, SQLiteConnection) GetBookInfo(string title, string author)
+        internal (MySqlDataReader, MySqlConnection) GetBookInfo(string title, string author)
         {
             var connection = GetConnection();            
             connection.Open();
 
             string searchString = $"SELECT * FROM {_tableName} WHERE Title = @title AND Author = @author;";
-            var command = new SQLiteCommand(searchString, connection);
+            var command = new MySqlCommand(searchString, connection);
 
             command.Parameters.AddWithValue("@title", title);
             command.Parameters.AddWithValue("@author", author);
@@ -129,13 +120,14 @@ namespace LibraryManagementSystem
             var connection = GetConnection();
             connection.Open();
 
-            string searchString = $@"SELECT * FROM {_tableName} WHERE ID = @id AND Available = @available;";
-            var command = new SQLiteCommand(searchString, connection);
+            string searchString = $@"SELECT COUNT(*) FROM {_tableName} WHERE ID = @id AND Available = @available;";
+            var command = new MySqlCommand(searchString, connection);
 
             command.Parameters.AddWithValue("@id", id);
             command.Parameters.AddWithValue("@available", available);
             var count = Convert.ToInt32(command.ExecuteScalar());
             connection.Close();
+            connection.Dispose();
             return count;
         }
        

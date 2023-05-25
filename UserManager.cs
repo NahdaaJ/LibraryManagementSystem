@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data.Entity.Core.Mapping;
-using System.Data.SQLite;
-using System.Linq;
-using System.Net.NetworkInformation;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Serialization;
+﻿using MySql.Data.MySqlClient;
 
 namespace LibraryManagementSystem
 {
@@ -20,11 +12,11 @@ namespace LibraryManagementSystem
             var email = user.Email;
             var pin = user.GeneratePin();
 
-            string addString = $"INSERT INTO {_tableName} (First_Name, Last_Name, Email, Pin) VALUES ('@firstName','@lastName','@email',@pin);";
+            string addString = $"INSERT INTO {_tableName} (First_Name, Last_Name, Email, Pin) VALUES (@firstName,@lastName,@email,@pin);";
             using (var connection = GetConnection())
             {
                 connection.Open();
-                using (var command = new SQLiteCommand(addString, connection))
+                using (var command = new MySqlCommand(addString, connection))
                 {
                     command.Parameters.AddWithValue("@firstName", firstName);
                     command.Parameters.AddWithValue("@lastName", lastName);
@@ -36,17 +28,15 @@ namespace LibraryManagementSystem
                 connection.Close();
             }
         }
-        internal void RemoveUser(string firstName, string lastName, int pin)
+        internal void RemoveUser(string id)
         {
-            string deleteString = @$"DELETE FROM {_tableName} WHERE First_Name COLLATE NOCASE = @firstName AND Last_Name COLLATE NOCASE = @Last_Name AND Pin = @pin;";
+            string deleteString = @$"DELETE FROM {_tableName} WHERE ID = @id;";
             using (var connection = GetConnection())
             {
                 connection.Open();
-                using (var command = new SQLiteCommand(deleteString, connection))
+                using (var command = new MySqlCommand(deleteString, connection))
                 {
-                    command.Parameters.AddWithValue("@firstName", firstName);
-                    command.Parameters.AddWithValue("@lastName", lastName);
-                    command.Parameters.AddWithValue("@pin", pin);
+                    command.Parameters.AddWithValue("@id", id);
 
                     command.ExecuteNonQuery();
                 }
@@ -59,7 +49,7 @@ namespace LibraryManagementSystem
             using (var connection = GetConnection())
             {
                 connection.Open();
-                using (var command = new SQLiteCommand(editString, connection))
+                using (var command = new MySqlCommand(editString, connection))
                 {
                     command.Parameters.AddWithValue("@firstName", firstName);
                     command.Parameters.AddWithValue("@lastName", lastName);
@@ -70,22 +60,71 @@ namespace LibraryManagementSystem
                 connection.Close();
             }
         }
-        internal SQLiteDataReader SearchUser(string firstName, string lastName)
+        internal (MySqlDataReader, MySqlConnection) SearchUser(string searchTerm)
         {
-            using (var connection = GetConnection())
-            {
-                connection.Open();
-                string searchString = $"SELECT * FROM {_tableName} WHERE First_Name = @firstName AND Last_Name = @lastName;";
+            var connection = GetConnection();
+            
+            connection.Open();
+            string searchString = $"SELECT * FROM {_tableName} WHERE First_Name LIKE @searchTerm OR Last_Name LIKE @searchTerm OR Email LIKE @searchTerm;";
 
-                using (var command = new SQLiteCommand(searchString, connection))
-                {
-                    command.Parameters.AddWithValue("@firstName", firstName);
-                    command.Parameters.AddWithValue("@lastName", lastName);
+            var command = new MySqlCommand(searchString, connection);
+            
+            command.Parameters.AddWithValue("@searchTerm", searchTerm);
 
-                    SQLiteDataReader rdr = command.ExecuteReader();
-                    return rdr;
-                }
-            }
+            MySqlDataReader rdr = command.ExecuteReader();
+            return (rdr, connection);                      
         }
+        internal (MySqlDataReader, MySqlConnection) GetUserInfo(string id)
+        {
+            var connection = GetConnection();
+
+            connection.Open();
+            string searchString = $"SELECT * FROM {_tableName} WHERE ID = @id;";
+
+            var command = new MySqlCommand(searchString, connection);
+
+            command.Parameters.AddWithValue("@id", id);
+
+            MySqlDataReader rdr = command.ExecuteReader();
+            return (rdr, connection);
+        }
+        internal (MySqlDataReader, MySqlConnection) GetPin(string firstName, string lastName, string email)
+        {
+            var connection = GetConnection();
+            connection.Open();
+            string searchString = $"SELECT Pin FROM {_tableName} WHERE First_Name = @firstName AND Last_Name = @lastName AND Email = @email;";
+
+            var command = new MySqlCommand(searchString, connection);
+            command.Parameters.AddWithValue("@firstName", firstName);
+            command.Parameters.AddWithValue("@lastName", lastName);
+            command.Parameters.AddWithValue("@email", email);
+
+            MySqlDataReader rdr = command.ExecuteReader();
+            return (rdr,connection);
+        }
+        internal (MySqlDataReader, MySqlConnection) GetID(int pin)
+        {
+            var connection = GetConnection();
+            connection.Open();
+            string searchString = $"SELECT ID FROM {_tableName} WHERE Pin = @pin;";
+
+            var command = new MySqlCommand(searchString, connection);
+            command.Parameters.AddWithValue("@pin", pin);
+
+            MySqlDataReader rdr = command.ExecuteReader();
+            return (rdr, connection);
+        }
+        internal (MySqlDataReader, MySqlConnection) ViewAllUsers()
+        {
+            var connection = GetConnection();
+            connection.Open();
+            string insertString = $"SELECT * FROM {_tableName} ORDER BY First_Name ASC;";
+
+            var command = new MySqlCommand(insertString, connection);
+
+            MySqlDataReader rdr = command.ExecuteReader();
+            return (rdr, connection);
+        }
+
     }
 }

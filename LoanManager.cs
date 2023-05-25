@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data.SQLite;
-using System.Linq;
-using System.Net.NetworkInformation;
-using System.Text;
-using System.Threading.Tasks;
+﻿using MySql.Data.MySqlClient;
 
 namespace LibraryManagementSystem
 {
@@ -13,20 +7,20 @@ namespace LibraryManagementSystem
         private readonly string _tableName = "Loans";
         internal void LoanBook(Loan loan)
         {
-            var pin = loan.Pin;
+            var userID = loan.UserID;
             var title = loan.BookTitle;
             var author = loan.Author;
             var loanDate = loan.DateBorrowed;
             var loanDateString = loanDate.ToString("yyyy-MM-dd");
             var dueDate = loan.DueDate(loanDate);
 
-            string loanString = $@"INSERT INTO {_tableName} (Pin, Title, Author, Date_Loaned, Date_Due) VALUES (@pin, @title, @author, @loanDateString, @dueDate);";
+            string loanString = $@"INSERT INTO {_tableName} (User_ID, Title, Author, Date_Loaned, Date_Due) VALUES (@userID, @title, @author, @loanDateString, @dueDate);";
             using (var connection = GetConnection())
             {
                 connection.Open();
-                using (var command = new SQLiteCommand(loanString, connection))
+                using (var command = new MySqlCommand(loanString, connection))
                 {
-                    command.Parameters.AddWithValue("@pin", pin);
+                    command.Parameters.AddWithValue("@userID", userID);
                     command.Parameters.AddWithValue("@title", title);
                     command.Parameters.AddWithValue("@author", author);
                     command.Parameters.AddWithValue("@loanDateString", loanDateString);
@@ -51,14 +45,14 @@ namespace LibraryManagementSystem
             using (var connection = GetConnection())
             {
                 connection.Open();
-                using (var command = new SQLiteCommand(returnString, connection))
+                using (var command = new MySqlCommand(returnString, connection))
                 {
                     command.Parameters.AddWithValue("@dateReturned", dateReturned);
                     command.Parameters.AddWithValue("@id", id);
 
                     command.ExecuteNonQuery();
                 }
-                using (var command = new SQLiteCommand(searchString, connection))
+                using (var command = new MySqlCommand(searchString, connection))
                 {
                     command.Parameters.AddWithValue("@id", id);
 
@@ -74,58 +68,48 @@ namespace LibraryManagementSystem
             var editAvailability = new BookManager();
             editAvailability.EditAvailability(title, author, "Yes");
         }
-        internal void RenewBook(int pin, string title, string author)
+        internal void RenewBook(string loanID)
         {
-            var loanID = 0;
-            var dueDate = DateTime.Now.AddDays(14).ToString("yyyy-MM-DD");
-
+            var dueDate = DateTime.Now.AddDays(1).ToString("yyyy-MM-dd"); // CHANGE THIS bACK TO 14
+           
             using (var connection = GetConnection())
             {
                 connection.Open();
-                string insertString = @$"SELECT ID FROM {_tableName}
-                                        WHERE Pin = @pin AND Title = @title AND Author = @author 
-                                        ORDER BY Date_Loaned DESC
-                                        LIMIT 1;";
 
-                using (var command = new SQLiteCommand(insertString, connection))
+                string renewString = $@"UPDATE {_tableName} SET Date_Due = @dueDate WHERE ID = @loanID;";
+
+                using (var command =  new MySqlCommand(renewString, connection))
                 {
-                    command.Parameters.AddWithValue("@pin", pin);
-                    command.Parameters.AddWithValue("@title", title);
-                    command.Parameters.AddWithValue("@author", author);
+                    command.Parameters.AddWithValue("@dueDate",dueDate);
+                    command.Parameters.AddWithValue("@loanID", loanID);
 
-                    SQLiteDataReader rdr = command.ExecuteReader();
-                    while (rdr.Read())
-                    {
-                        loanID = rdr.GetInt32(0);
-                    }
+                    command.ExecuteNonQuery();
                 }
                 connection.Close();
             }
-
-            using (var connection = GetConnection())
-            {
-                connection.Open();
-
-                string renewString = $@"UPDATE {_tableName} SET Due_Date = @dueDate WHERE ID = @id;";
-
-                using (var command =  new SQLiteCommand(renewString, connection))
-                {
-                    command.Parameters.AddWithValue("@dueDate",dueDate);
-                    command.Parameters.AddWithValue("@id", loanID);
-                }
-            }
         }
-        internal (SQLiteDataReader, SQLiteConnection) SearchUserLoans(int pin)
+        internal (MySqlDataReader, MySqlConnection) SearchUserLoans(int userID)
         {
             var connection = GetConnection();
             connection.Open();
-            string searchString = @$"SELECT * FROM {_tableName} WHERE Pin = @pin AND Date_Returned IS NULL;";
+            string searchString = @$"SELECT * FROM {_tableName} WHERE User_ID = @userID AND Date_Returned IS NULL;";
 
-            var command = new SQLiteCommand(searchString, connection);
-            command.Parameters.AddWithValue("@pin", pin);
+            var command = new MySqlCommand(searchString, connection);
+            command.Parameters.AddWithValue("@UserID", userID);
 
-            SQLiteDataReader rdr = command.ExecuteReader();
+            MySqlDataReader rdr = command.ExecuteReader();
             return (rdr,connection);
+        }
+        internal (MySqlDataReader, MySqlConnection) ViewAllLoans()
+        {
+            var connection = GetConnection();
+            connection.Open();
+            string searchString = @$"SELECT * FROM {_tableName} WHERE Date_Returned IS NULL;";
+
+            var command = new MySqlCommand(searchString, connection);
+
+            MySqlDataReader rdr = command.ExecuteReader();
+            return (rdr, connection);
         }
         internal int GetLoan(string id) // new close
         {
@@ -133,23 +117,40 @@ namespace LibraryManagementSystem
             connection.Open();
             string searchString = @$"SELECT * FROM {_tableName} WHERE ID = @id;";
 
-            var command = new SQLiteCommand(searchString, connection);
+            var command = new MySqlCommand(searchString, connection);
             command.Parameters.AddWithValue("@id", id);
 
             int count = Convert.ToInt32(command.ExecuteScalar());
             connection.Close();
+            connection.Dispose();
             return count;
         }
-        internal int LoanLimit(int pin)
+        internal int LoanLimit(int userID)
         {
             var connection = GetConnection();
             connection.Open();
-            string searchString = @$"SELECT COUNT(*) FROM {_tableName} WHERE Pin = @pin AND Date_Returned IS NULL;";
+            string searchString = @$"SELECT COUNT(*) FROM {_tableName} WHERE User_ID = @userID AND Date_Returned IS NULL;";
 
-            var command = new SQLiteCommand(searchString, connection);
-            command.Parameters.AddWithValue("@pin", pin);
+            var command = new MySqlCommand(searchString, connection);
+            command.Parameters.AddWithValue("@userID", userID);
 
             int count = Convert.ToInt32(command.ExecuteScalar());
+            connection.Close();
+            connection.Dispose();
+            return count;
+        }
+        internal int CheckLoanExists(string loanID)
+        {
+            var connection = GetConnection();
+            connection.Open();
+
+            string searchString = $@"SELECT COUNT(*) FROM {_tableName} WHERE ID = @id;";
+            var command = new MySqlCommand(searchString, connection);
+
+            command.Parameters.AddWithValue("@id", loanID);
+            var count = Convert.ToInt32(command.ExecuteScalar());
+            connection.Close();
+            connection.Dispose();
             return count;
         }
        
